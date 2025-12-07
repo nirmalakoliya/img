@@ -1,4 +1,5 @@
 "use client";
+
 import { useState } from "react";
 import UploadBox from "../components/UploadBox";
 import { generateVariations } from "../lib/generator";
@@ -7,114 +8,117 @@ import { saveAs } from "file-saver";
 
 export default function Page() {
   const [file, setFile] = useState(null);
+  const [preview, setPreview] = useState(null);
   const [images, setImages] = useState([]);
   const [mode, setMode] = useState("frame");
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
 
+  function handleSelect(file) {
+    setFile(file);
+    setPreview(URL.createObjectURL(file));
+  }
+
   async function handleGenerate() {
-    if (!file) return alert("Please upload a photo first.");
+    if (!file) return alert("Upload a photo first");
+
     setLoading(true);
     setProgress(0);
     setImages([]);
 
-    const results = [];
-    const all = await generateVariations(file, { mode, count: 100 });
+    const all = await generateVariations(file, { mode, count: 200 });
 
     for (let i = 0; i < all.length; i++) {
-      results.push(all[i]);
-      if ((i + 1) % 5 === 0 || i === all.length - 1) {
-        setImages([...results]);
-        setProgress(Math.round(((i + 1) / all.length) * 100));
-        await new Promise((r) => setTimeout(r, 10));
-      }
+      setImages((p) => [...p, all[i]]);
+      setProgress(Math.round(((i + 1) / all.length) * 100));
+      await new Promise((r) => setTimeout(r, 10));
     }
 
     setLoading(false);
   }
 
   async function downloadZip() {
-    if (!images.length) return;
     const zip = new JSZip();
+
     images.forEach((durl, i) => {
       const b64 = durl.split(",")[1];
-      zip.file(`variation-${String(i + 1).padStart(3, "0")}.png`, b64, { base64: true });
+      zip.file(`${i + 1}.png`, b64, { base64: true });
     });
-    const blob = await zip.generateAsync({ type: "blob" });
-    saveAs(blob, "variations.zip");
+
+    const blob = await zip.generateAsync(
+      { type: "blob" },
+      (meta) => setProgress(Math.floor(meta.percent))
+    );
+
+    saveAs(blob, "images.zip");
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0A1C4F] via-[#0F2D74] to-[#0A1C4F] p-6">
+    <div className="min-h-screen flex justify-center items-center p-10 text-white">
+      <div className="w-full max-w-[1600px]">
 
- 
-      <div className="w-full max-w-[1600px] bg-white/20 backdrop-blur-2xl border border-white/30 
-                    rounded-3xl shadow-[0_20px_80px_rgba(0,0,0,0.45)] p-10 md:p-14">
-
-        <h1 className="text-4xl md:text-6xl font-bold text-center mb-12 tracking-wide text-white drop-shadow-lg">
-          Image Variator — 100 Unique Outputs
+        <h1 className="text-5xl font-bold text-center mb-12 drop-shadow-lg">
+          Image Variator — 200 Unique Outputs
         </h1>
 
-      
-        <div className="flex flex-col md:flex-row md:items-start gap-10 bg-white/20 backdrop-blur-xl
-                        p-8 md:p-12 rounded-3xl border border-white/30 shadow-[0_10px_40px_rgba(0,0,0,0.3)]">
+        <div className="glass p-12 rounded-3xl flex flex-col md:flex-row gap-12 justify-center items-center">
 
-          <UploadBox onSelect={setFile} currentFileName={file?.name} />
+          {/* UPLOAD BOX */}
+          <UploadBox onSelect={handleSelect} currentFileName={file?.name} />
 
-   
-          <div className="flex flex-col gap-6 w-full md:w-96 text-white font-semibold">
-            <label className="text-2xl">Mode</label>
+          {/* PREVIEW */}
+          {preview && (
+            <div className="w-80 h-80 rounded-xl glass overflow-hidden flex justify-center items-center">
+              <img src={preview} className="max-w-full max-h-full object-contain" />
+            </div>
+          )}
+
+          {/* CONTROLS */}
+          <div className="flex flex-col gap-5 w-full md:w-96">
+
+            <label className="text-2xl font-semibold">Select Mode ❤</label>
 
             <select
               value={mode}
               onChange={(e) => setMode(e.target.value)}
-              className="border border-white/40 bg-white/30 text-white p-4 rounded-xl backdrop-blur-md 
-                         focus:outline-none shadow-lg"
+              className="p-3 rounded-xl glass text-white"
             >
-              <option value="frame" className="text-black font-bold">Frame (keeps photo pixels)</option>
-              <option value="bg" className="text-black font-bold">Background (keeps photo pixels)</option>
+              <option value="frame" className="text-black">Frame</option>
+              <option value="bg" className="text-black">Background</option>
             </select>
 
-      
             <button
               onClick={handleGenerate}
               disabled={loading}
-              className="bg-purple-600/90 hover:bg-purple-700 transition text-white font-bold px-6 py-4 
-                         rounded-xl shadow-[0_5px_20px_rgba(0,0,0,0.4)] disabled:opacity-50 backdrop-blur-md"
+              className="py-4 bg-blue-600 rounded-xl shadow-xl hover:bg-blue-700 disabled:opacity-40 cursor-pointer"
             >
-              Generate 100
+              Generate 200
             </button>
 
             <button
               onClick={downloadZip}
               disabled={!images.length}
-              className="bg-orange-600/90 hover:bg-orange-700 transition text-white font-bold px-6 py-4 
-                         rounded-xl shadow-[0_5px_20px_rgba(0,0,0,0.4)] disabled:opacity-50 backdrop-blur-md"
+              className="py-4 bg-orange-600 rounded-xl shadow-xl hover:bg-orange-700 disabled:opacity-40 cursor-pointer"
             >
               Download ZIP
             </button>
 
             {loading && (
-              <div className="text-lg text-white">Generating... {progress}%</div>
+              <div className="text-lg text-white">Progress: {progress}%</div>
             )}
+
           </div>
         </div>
 
-    
+        {/* GENERATED RESULTS */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6 mt-12">
-          {images.map((src, idx) => (
-            <div
-              key={idx}
-              className="bg-white/30 backdrop-blur-xl border border-white/40 rounded-2xl p-3 shadow-xl"
-            >
-              <img
-                src={src}
-                className="w-full h-auto rounded-xl shadow-lg"
-                alt={`var-${idx}`}
-              />
+          {images.map((src, i) => (
+            <div key={i} className="p-3 rounded-2xl glass">
+              <img src={src} className="rounded-xl" />
             </div>
           ))}
         </div>
+
       </div>
     </div>
   );
