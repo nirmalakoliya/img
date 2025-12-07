@@ -8,7 +8,6 @@ body {
   font-family: sans-serif;
 }
 
-/* Smooth glass effect */
 .glass {
   background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(25px);
@@ -27,3 +26,4 @@ margin-top: 2%;
     padding-bottom: 3%;
     padding-left: 2%;
 }
+

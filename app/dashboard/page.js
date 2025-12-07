@@ -63,17 +63,17 @@ export default function Page() {
 
         <div className="glass p-12 rounded-3xl flex flex-col md:flex-row gap-12 justify-center items-center">
 
-          {/* UPLOAD BOX */}
+         
           <UploadBox onSelect={handleSelect} currentFileName={file?.name} />
 
-          {/* PREVIEW */}
+         
           {preview && (
             <div className="w-80 h-80 rounded-xl glass overflow-hidden flex justify-center items-center">
               <img src={preview} className="max-w-full max-h-full object-contain" />
             </div>
           )}
 
-          {/* CONTROLS */}
+    
           <div className="flex flex-col gap-5 w-full md:w-96">
 
             <label className="text-2xl font-semibold">Select Mode ❤</label>
@@ -110,7 +110,7 @@ export default function Page() {
           </div>
         </div>
 
-        {/* GENERATED RESULTS */}
+     
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6 mt-12">
           {images.map((src, i) => (
             <div key={i} className="p-3 rounded-2xl glass">

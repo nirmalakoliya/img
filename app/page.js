@@ -12,7 +12,6 @@ export default function LoginPage() {
   const [error, setError] = useState("");
 
   function handleLogin() {
-    // Empty checks
     if (!name && !pass) {
       setError("Please enter name and password");
       return;
@@ -28,19 +27,16 @@ export default function LoginPage() {
       return;
     }
 
-    // Wrong name
-    if (name !== "Nirmal") {
+    if (name !== "AkoliyaNirmal") {
       setError("Name is wrong");
       return;
     }
 
-    // Wrong password
-    if (pass !== "12345") {
+    if (pass !== "0264") {
       setError("Password is wrong");
       return;
     }
 
-    // Success
     setError("");
     localStorage.setItem("isLoggedIn", "true");
     router.push("/dashboard");
