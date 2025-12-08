@@ -3,7 +3,6 @@
 export default function UploadBox({ onSelect, currentFileName }) {
   return (
     <div className="p-4 w-72 rounded-xl glass text-center">
-
       <label className="block cursor-pointer">
         <input
           type="file"
