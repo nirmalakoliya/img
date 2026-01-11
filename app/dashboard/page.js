@@ -58,33 +58,28 @@ export default function Page() {
       setDownloadMessage("Preparing files...");
 
       const zip = new JSZip();
-      const total = images.length;
 
-      for (let i = 0; i < total; i++) {
-        const base64 = images[i].split(",")[1];
-        zip.file(`${i + 1}.png`, base64, { base64: true });
-
-        const percent = Math.round(((i + 1) / total) * 30);
-        setDownloadProgress(percent);
-        setDownloadMessage(`Packing files: ${percent}%`);
-        await new Promise((r) => setTimeout(r, 5));
+      for (let i = 0; i < images.length; i++) {
+        zip.file(`${i + 1}.png`, images[i].split(",")[1], { base64: true });
+        setDownloadProgress(Math.round(((i + 1) / images.length) * 20)); // small initial progress
       }
+
+      setDownloadMessage("Creating ZIP archive...");
 
       const blob = await zip.generateAsync(
         { type: "blob", compression: "DEFLATE", compressionOptions: { level: 6 } },
         (meta) => {
-          const mapped = Math.min(99, 30 + Math.round((meta.percent / 100) * 70));
+          // ✅ map zip progress from 20–100%
+          const mapped = 20 + Math.round((meta.percent / 100) * 80);
           setDownloadProgress(mapped);
           setDownloadMessage(`Creating ZIP: ${Math.round(meta.percent)}%`);
         }
       );
 
+      setDownloadMessage("Starting download...");
       saveAs(blob, "images.zip");
       setDownloadProgress(100);
       setDownloadMessage("Download ready (100%)");
-    } catch (err) {
-      console.error(err);
-      setDownloadMessage("Download failed");
     } finally {
       setTimeout(() => {
         setDownloading(false);
@@ -103,7 +98,6 @@ export default function Page() {
         </h1>
 
         <div className="glass p-12 rounded-3xl flex flex-col md:flex-row gap-12 justify-center items-center">
-
           <UploadBox onSelect={handleSelect} currentFileName={file?.name} />
 
           {preview && (
@@ -117,23 +111,22 @@ export default function Page() {
           )}
 
           <div className="flex flex-col gap-5 w-full md:w-96">
-            <label className="text-2xl font-semibold">Select Mode ❤</label>
-
-            {/* FINAL SELECT */}
             <select
               value={mode}
               onChange={(e) => setMode(e.target.value)}
-              className="p-3 cursor-pointer rounded-xl bg-[#222] text-white border border-white/20"
+              className="p-3 rounded-xl bg-[#222] text-white border cursor-pointer border-white/20"
             >
               <option className="bg-[#222]" value="frame">Frame</option>
               <option className="bg-[#222]" value="plain">Plain Background</option>
               <option className="bg-[#222]" value="mixed">Mixed Background</option>
+              {/* ⭐ ADD ONLY */}
+              <option className="bg-[#222]" value="emoji">Emoji 🙂</option>
             </select>
 
             <button
               onClick={handleGenerate}
               disabled={loading}
-              className="py-4 cursor-pointer bg-blue-600 rounded-xl shadow-xl disabled:opacity-40"
+              className="py-4 bg-blue-600 rounded-xl shadow-xl hover:bg-blue-700 disabled:opacity-40 cursor-pointer"
             >
               Generate 200
             </button>
@@ -141,28 +134,26 @@ export default function Page() {
             <button
               onClick={downloadZip}
               disabled={!images.length || downloading}
-              className="py-4 cursor-pointer bg-blue-600 rounded-xl shadow-xl disabled:opacity-40"
+              className="py-4 bg-orange-600 rounded-xl shadow-xl hover:bg-orange-700 disabled:opacity-40 cursor-pointer"
             >
               Download ZIP
             </button>
 
             {loading && (
-              <div className="text-lg">Generating: {generateProgress}%</div>
+              <div className="text-lg text-white">
+                Generating: {generateProgress}%
+              </div>
             )}
 
             {downloading && (
               <div className="mt-2">
-                <div className="text-lg text-green-400 font-bold">
-                  {downloadMessage}
-                </div>
-
+                <div className="text-lg text-green-400 font-bold">{downloadMessage}</div>
                 <div className="w-full bg-white/10 rounded-full h-3 mt-2 overflow-hidden">
                   <div
                     style={{ width: `${downloadProgress}%` }}
                     className="h-3 rounded-full bg-green-400 transition-all duration-150"
                   />
                 </div>
-
                 <div className="text-sm text-white/80 mt-1">
                   {downloadProgress}%
                 </div>
@@ -174,7 +165,7 @@ export default function Page() {
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6 mt-12">
           {images.map((src, i) => (
             <div key={i} className="p-3 rounded-2xl glass">
-              <img src={src} className="rounded-xl" alt={`var-${i}`} />
+              <img src={src} className="rounded-xl" />
             </div>
           ))}
         </div>
