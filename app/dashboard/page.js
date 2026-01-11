@@ -58,45 +58,38 @@ export default function Page() {
       setDownloadMessage("Preparing files...");
 
       const zip = new JSZip();
-
       const total = images.length;
-      for (let i = 0; i < total; i++) {
-        const dataUrl = images[i];
-        const b64 = dataUrl.split(",")[1];
-        zip.file(`${i + 1}.png`, b64, { base64: true });
 
-        const packPercent = Math.round(((i + 1) / total) * 30);
-        setDownloadProgress(packPercent);
-        setDownloadMessage(`Packing files: ${packPercent}%`);
+      for (let i = 0; i < total; i++) {
+        const base64 = images[i].split(",")[1];
+        zip.file(`${i + 1}.png`, base64, { base64: true });
+
+        const percent = Math.round(((i + 1) / total) * 30);
+        setDownloadProgress(percent);
+        setDownloadMessage(`Packing files: ${percent}%`);
         await new Promise((r) => setTimeout(r, 5));
       }
 
-      setDownloadMessage("Creating ZIP archive...");
       const blob = await zip.generateAsync(
         { type: "blob", compression: "DEFLATE", compressionOptions: { level: 6 } },
         (meta) => {
-          const genPercent = Math.round(meta.percent);
-          const mapped = Math.min(99, 30 + Math.round((genPercent / 100) * 69));
+          const mapped = Math.min(99, 30 + Math.round((meta.percent / 100) * 70));
           setDownloadProgress(mapped);
-          setDownloadMessage(`Creating ZIP: ${genPercent}%`);
+          setDownloadMessage(`Creating ZIP: ${Math.round(meta.percent)}%`);
         }
       );
 
-      setDownloadMessage("Starting download...");
-      setDownloadProgress(99);
       saveAs(blob, "images.zip");
-
-      await new Promise((r) => setTimeout(r, 400));
       setDownloadProgress(100);
       setDownloadMessage("Download ready (100%)");
     } catch (err) {
-      console.error("Download error:", err);
-      setDownloadMessage("Error during download");
+      console.error(err);
+      setDownloadMessage("Download failed");
     } finally {
       setTimeout(() => {
         setDownloading(false);
-        setDownloadMessage("");
         setDownloadProgress(0);
+        setDownloadMessage("");
       }, 1000);
     }
   }
@@ -110,6 +103,7 @@ export default function Page() {
         </h1>
 
         <div className="glass p-12 rounded-3xl flex flex-col md:flex-row gap-12 justify-center items-center">
+
           <UploadBox onSelect={handleSelect} currentFileName={file?.name} />
 
           {preview && (
@@ -125,28 +119,21 @@ export default function Page() {
           <div className="flex flex-col gap-5 w-full md:w-96">
             <label className="text-2xl font-semibold">Select Mode ❤</label>
 
-            {/* UPDATED SELECT (FIXED BACKGROUND COLOR & OPTIONS) */}
+            {/* FINAL SELECT */}
             <select
               value={mode}
               onChange={(e) => setMode(e.target.value)}
-              className="p-3 rounded-xl bg-[#222] text-white border border-white/20"
+              className="p-3 cursor-pointer rounded-xl bg-[#222] text-white border border-white/20"
             >
-              <option value="frame" className="bg-[#222] text-white">Frame</option>
-              <option value="bg" className="bg-[#222] text-white">Background</option>
-
-              {/* New modes (your generator.js handles these) */}
-              <option value="plain" className="bg-[#222] text-white">Plain Background</option>
-              <option value="mixed" className="bg-[#222] text-white">Mixed Background</option>
-              <option value="lines-vertical" className="bg-[#222] text-white">Vertical Lines</option>
-              <option value="lines-horizontal" className="bg-[#222] text-white">Horizontal Lines</option>
-              <option value="lines-grid" className="bg-[#222] text-white">Grid Lines</option>
-              <option value="lines-random" className="bg-[#222] text-white">Random Angle Lines</option>
+              <option className="bg-[#222]" value="frame">Frame</option>
+              <option className="bg-[#222]" value="plain">Plain Background</option>
+              <option className="bg-[#222]" value="mixed">Mixed Background</option>
             </select>
 
             <button
               onClick={handleGenerate}
               disabled={loading}
-              className="py-4 bg-blue-600 rounded-xl shadow-xl hover:bg-blue-700 disabled:opacity-40 cursor-pointer"
+              className="py-4 cursor-pointer bg-blue-600 rounded-xl shadow-xl disabled:opacity-40"
             >
               Generate 200
             </button>
@@ -154,20 +141,20 @@ export default function Page() {
             <button
               onClick={downloadZip}
               disabled={!images.length || downloading}
-              className="py-4 bg-orange-600 rounded-xl shadow-xl hover:bg-orange-700 disabled:opacity-40 cursor-pointer"
+              className="py-4 cursor-pointer bg-blue-600 rounded-xl shadow-xl disabled:opacity-40"
             >
               Download ZIP
             </button>
 
             {loading && (
-              <div className="text-lg text-white">
-                Generating: {generateProgress}%
-              </div>
+              <div className="text-lg">Generating: {generateProgress}%</div>
             )}
 
             {downloading && (
               <div className="mt-2">
-                <div className="text-lg text-green-400 font-bold">{downloadMessage}</div>
+                <div className="text-lg text-green-400 font-bold">
+                  {downloadMessage}
+                </div>
 
                 <div className="w-full bg-white/10 rounded-full h-3 mt-2 overflow-hidden">
                   <div
