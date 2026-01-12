@@ -49,37 +49,40 @@ export default function Page() {
     setLoading(false);
   }
 
+  // ✅ FIXED ZIP DOWNLOAD (PERFECT %)
   async function downloadZip() {
     if (!images.length) return;
 
     try {
       setDownloading(true);
       setDownloadProgress(0);
-      setDownloadMessage("Preparing files...");
+      setDownloadMessage("Adding files...");
 
       const zip = new JSZip();
 
-      for (let i = 0; i < images.length; i++) {
-        zip.file(`${i + 1}.png`, images[i].split(",")[1], { base64: true });
-        setDownloadProgress(Math.round(((i + 1) / images.length) * 20)); // small initial progress
-      }
+      images.forEach((img, i) => {
+        zip.file(`${i + 1}.png`, img.split(",")[1], { base64: true });
+      });
 
-      setDownloadMessage("Creating ZIP archive...");
+      setDownloadMessage("Creating ZIP...");
 
       const blob = await zip.generateAsync(
-        { type: "blob", compression: "DEFLATE", compressionOptions: { level: 6 } },
+        {
+          type: "blob",
+          compression: "DEFLATE",
+          compressionOptions: { level: 6 }
+        },
         (meta) => {
-          // ✅ map zip progress from 20–100%
-          const mapped = 20 + Math.round((meta.percent / 100) * 80);
-          setDownloadProgress(mapped);
-          setDownloadMessage(`Creating ZIP: ${Math.round(meta.percent)}%`);
+          const percent = Math.round(meta.percent);
+          setDownloadProgress(percent);
+          setDownloadMessage(`Creating ZIP: ${percent}%`);
         }
       );
 
-      setDownloadMessage("Starting download...");
       saveAs(blob, "images.zip");
+
       setDownloadProgress(100);
-      setDownloadMessage("Download ready (100%)");
+      setDownloadMessage("Download complete (100%)");
     } finally {
       setTimeout(() => {
         setDownloading(false);
@@ -102,11 +105,7 @@ export default function Page() {
 
           {preview && (
             <div className="w-80 h-80 rounded-xl glass overflow-hidden flex justify-center items-center">
-              <img
-                src={preview}
-                className="max-w-full max-h-full object-contain"
-                alt="preview"
-              />
+              <img src={preview} className="max-w-full max-h-full object-contain" />
             </div>
           )}
 
@@ -119,14 +118,13 @@ export default function Page() {
               <option className="bg-[#222]" value="frame">Frame</option>
               <option className="bg-[#222]" value="plain">Plain Background</option>
               <option className="bg-[#222]" value="mixed">Mixed Background</option>
-              {/* ⭐ ADD ONLY */}
               <option className="bg-[#222]" value="emoji">Emoji 🙂</option>
             </select>
 
             <button
               onClick={handleGenerate}
               disabled={loading}
-              className="py-4 bg-blue-600 rounded-xl shadow-xl hover:bg-blue-700 disabled:opacity-40 cursor-pointer"
+              className="py-4 bg-blue-600 rounded-xl cursor-pointer shadow-xl hover:bg-blue-700 disabled:opacity-40"
             >
               Generate 200
             </button>
@@ -134,16 +132,12 @@ export default function Page() {
             <button
               onClick={downloadZip}
               disabled={!images.length || downloading}
-              className="py-4 bg-orange-600 rounded-xl shadow-xl hover:bg-orange-700 disabled:opacity-40 cursor-pointer"
+              className="py-4 bg-orange-600 rounded-xl cursor-pointer shadow-xl hover:bg-orange-700 disabled:opacity-40"
             >
               Download ZIP
             </button>
 
-            {loading && (
-              <div className="text-lg text-white">
-                Generating: {generateProgress}%
-              </div>
-            )}
+            {loading && <div>Generating: {generateProgress}%</div>}
 
             {downloading && (
               <div className="mt-2">
@@ -154,9 +148,7 @@ export default function Page() {
                     className="h-3 rounded-full bg-green-400 transition-all duration-150"
                   />
                 </div>
-                <div className="text-sm text-white/80 mt-1">
-                  {downloadProgress}%
-                </div>
+                <div className="text-sm mt-1">{downloadProgress}%</div>
               </div>
             )}
           </div>
