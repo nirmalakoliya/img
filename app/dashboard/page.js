@@ -38,18 +38,19 @@ export default function Page() {
     setGenerateProgress(0);
     setImages([]);
 
-    const all = await generateVariations(file, { mode, count: 200 });
-
-    for (let i = 0; i < all.length; i++) {
-      setImages((p) => [...p, all[i]]);
-      setGenerateProgress(Math.round(((i + 1) / all.length) * 100));
-      await new Promise((r) => setTimeout(r, 10));
-    }
+    await generateVariations(
+      file,
+      { mode, count: 200 },
+      (progress) => setGenerateProgress(progress),
+      (chunk) => {
+        const urls = chunk.map((b) => URL.createObjectURL(b));
+        setImages((prev) => [...prev, ...urls]);
+      }
+    );
 
     setLoading(false);
   }
 
-  // ✅ FIXED ZIP DOWNLOAD (PERFECT %)
   async function downloadZip() {
     if (!images.length) return;
 
@@ -60,18 +61,14 @@ export default function Page() {
 
       const zip = new JSZip();
 
-      images.forEach((img, i) => {
-        zip.file(`${i + 1}.png`, img.split(",")[1], { base64: true });
-      });
-
-      setDownloadMessage("Creating ZIP...");
+      for (let i = 0; i < images.length; i++) {
+        const response = await fetch(images[i]);
+        const blob = await response.blob();
+        zip.file(`${i + 1}.png`, blob);
+      }
 
       const blob = await zip.generateAsync(
-        {
-          type: "blob",
-          compression: "DEFLATE",
-          compressionOptions: { level: 6 }
-        },
+        { type: "blob", compression: "DEFLATE", compressionOptions: { level: 6 } },
         (meta) => {
           const percent = Math.round(meta.percent);
           setDownloadProgress(percent);
